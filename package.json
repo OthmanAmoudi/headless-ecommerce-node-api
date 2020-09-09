@@ -1,0 +1,24 @@
+{
+  "name": "store_api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "dotenv": "^8.2.0"
+  },
+  "dependencies": {
+    "bcrypt": "^5.0.0",
+    "crypto": "^1.0.1",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.10.3",
+    "morgan": "^1.10.0",
+    "validator": "^13.1.1"
+  }
+}
