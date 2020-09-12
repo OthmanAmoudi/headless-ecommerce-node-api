@@ -6,6 +6,7 @@ const userSchema = mongoose.Schema({
     type: String,
     lowercase: true,
     trim: true,
+    required: true,
   },
   email: {
     type: String,
@@ -19,7 +20,7 @@ const userSchema = mongoose.Schema({
   password: {
     type: String,
     required: [true, "Please Provide a Password"],
-    minLength: [8, "Password must be at least 8 charachters"],
+    minlength: [8, "Password must be at least 8 charachters"],
     maxlength: [255, "Password can not exceed 255 charachters"],
     select: false,
   },

@@ -1,111 +1,92 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const { promisify } = require("util");
-const AppError = require("../utils/AppError");
+const AppError = require("../utils/appError");
+const catchAsync = require("../utils/catchAsync");
 
-module.exports.createToken = (data) => {
+const createToken = (data) => {
   return jwt.sign({ data }, process.env.TOKEN_SECRET, {
     expiresIn: 60 * 60 * (24 * 12),
   });
 };
 
-module.exports.login = async (req, res, next) => {
-  try {
-    const user = await User.findOne({ email: req.body.email }).select(
-      "+password"
-    );
-    const isPasswordMatch = await user.checkPassword(
-      req.body.password,
-      user.password
-    );
-
-    if (!user || !isPasswordMatch) {
-      console.log("throwingggg...");
-      return next("user or password does not match");
-    }
-    user.password = undefined;
-    let token = this.createToken(user);
-    res.cookie("token", token);
-    res.status(200).json({
-      status: 200,
-      token,
-    });
-  } catch (error) {
-    res.status(400).json({
-      status: 400,
-      message: "Error Finding user by email",
-      error,
-    });
-  }
+const sendToken = (user, statusCode, res) => {
+  user.password = undefined;
+  const token = createToken(user);
+  res.cookie("jwt", token, {
+    expires: new Date(Date.now() + 60 * 60 * (24 * 12)),
+    httpOnly: true,
+  });
+  res.status(statusCode).json({
+    status: "success",
+    token,
+    user,
+  });
 };
 
+module.exports.login = catchAsync(async (req, res, next) => {
+  const { password, email } = req.body;
+
+  if (!password || !email) {
+    return next(new AppError("Please provide both password and email", 400));
+  }
+
+  const user = await User.findOne({ email: req.body.email }).select(
+    "+password"
+  );
+
+  if (!user || !(await user.checkPassword(password, user.password))) {
+    return next(new AppError("Password or email was incorrect"));
+  }
+
+  sendToken(user, 200, res);
+});
+
+module.exports.signup = catchAsync(async (req, res, next) => {
+  const { name, password, passwordConfirm, email } = req.body;
+  const user = await User.create({ name, email, password, passwordConfirm });
+  sendToken(user, 200, res);
+});
+
 module.exports.logout = (req, res) => {
+  let message;
+  if (req.user) {
+    message = "logging user out";
+  } else {
+    message = "user already logged out";
+  }
   req.user = undefined;
   res.clearCookie("token");
   res.status(200).json({
     status: 200,
-    message: "user logged out",
+    message,
   });
 };
 
-module.exports.signup = async (req, res) => {
-  try {
-    const user = await User.create({
-      name: req.body.name,
-      email: req.body.email,
-      password: req.body.password,
-      passwordConfirm: req.body.passwordConfirm,
-    });
-    user.password = undefined;
-    let token = this.createToken(user);
-    res.status(200).json({
-      status: 200,
-      message: "Registration Successful",
-      token,
-    });
-  } catch (e) {
-    console.log(e);
-    res.status(500).json({
-      status: 500,
-      error: e,
-      message: "Failed to register user",
-    });
+module.exports.protect = catchAsync(async (req, res, next) => {
+  const { authorization } = req.headers;
+
+  let token;
+
+  if (authorization && authorization.startsWith("Bearer")) {
+    token = authorization.split(" ")[1];
   }
-};
 
-//only singed in users
-module.exports.protect = async (req, res, next) => {
-  try {
-    const { authorization } = req.headers;
-    let token;
-
-    if (authorization && authorization.startsWith("Bearer")) {
-      token = req.headers.authorization.split(" ")[1];
-    }
-
-    if (!token) {
-      return next(new AppError("No Token Provided", 500));
-    }
-
-    const decoded = await promisify(jwt.verify)(
-      token,
-      process.env.TOKEN_SECRET
-    );
-    req.user = decoded.data;
-    console.log("Authorized");
-    next();
-  } catch (error) {
-    console.log("==error==");
-    return next(error);
+  if (!token) {
+    return next(new AppError("You Must Sign in", 400));
   }
-};
 
-//only admin user
+  const decoded = await promisify(jwt.verify)(token, process.env.TOKEN_SECRET);
+
+  req.user = decoded.data;
+  next();
+});
+
 module.exports.restrictTo = (...rest) => {
-  return (req, _res, next) => {
+  return (req, res, next) => {
     if (rest.includes(req.user.role)) {
       next();
     }
-    return next("Not Allowed to access this route");
+    return next(new AppError("Not Allowed to access this route", 500));
   };
 };
