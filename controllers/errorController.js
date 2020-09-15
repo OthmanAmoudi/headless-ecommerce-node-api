@@ -8,15 +8,19 @@ const handleDuplicateFieldsDB = (error) => {
 };
 
 const handleValidationFieldsDB = (error) => {
-  const allErrors = [];
+  const validationErrors = [];
   const errorKeys = Object.keys(error.errors);
   errorKeys.forEach((errorKey) => {
-    allErrors.push({ [errorKey]: error.errors[errorKey].properties.message });
+    validationErrors.push({
+      [errorKey]: error.errors[errorKey].properties.message,
+    });
   });
-  // console.log(allErrors);
-  const message = "validation fields error";
-  return [new AppError(message, 400), allErrors];
+
+  return [new AppError("validation fields error", 400), validationErrors];
 };
+
+const handleJWTError = (error) =>
+  new AppError(`Please log in again,${error.message}`, 401);
 
 //during 'DEVELOPMENT MODE'
 const sendFullErrorLog = (err, res) => {
@@ -31,17 +35,32 @@ const sendFullErrorLog = (err, res) => {
 
 //during 'PRODUCTION MODE'
 const sendShortErrorLog = (err, res) => {
-  res.status(err.statusCode).json({
-    status: err.status,
-    message: err.message,
-  });
+  if (err.isOperational) {
+    res.status(err.statusCode).json({
+      status: err.status,
+      message: err.message,
+    });
+  } else {
+    res.status(err.statusCode).json({
+      status: "error",
+      message: "something went wrong",
+    });
+  }
 };
+
 const sendShortErrorLogWithValidations = (err, validations, res) => {
-  res.status(err.statusCode).json({
-    status: err.status,
-    message: err.message,
-    validations,
-  });
+  if (err.isOperational) {
+    res.status(err.statusCode).json({
+      status: err.status,
+      message: err.message,
+      validations,
+    });
+  } else {
+    res.status(err.statusCode).json({
+      status: "error",
+      message: "something went wrong",
+    });
+  }
 };
 
 module.exports = (err, req, res, next) => {
@@ -49,18 +68,24 @@ module.exports = (err, req, res, next) => {
   err.status = err.status || "error";
   err.validations = [] || "no validation errors";
 
-  // console.log(err);
+  // console.table(err);
   if (process.env.NODE_ENV === "development") {
     sendFullErrorLog(err, res);
   } else if (process.env.NODE_ENV === "production") {
-    let error = { ...err };
-    // console.log();
+    //get ride of all new Error() props but only keep message
+    let msg = err.message;
+    let error = { ...err, message: msg };
+    // console.table(error);
     if (error.code === 11000) error = handleDuplicateFieldsDB(error);
-    if (Object.keys(error.errors).length > 0) {
+    if (Object.keys(error.errors || []).length > 0) {
       error = handleValidationFieldsDB(error);
       sendShortErrorLogWithValidations(error[0], error[1], res);
       return;
     }
+    if (err.name == "JsonWebTokenError" || err.name == "TokenExpiredError") {
+      error = handleJWTError(error);
+    }
+
     sendShortErrorLog(error, res);
   }
 };

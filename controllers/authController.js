@@ -39,6 +39,7 @@ module.exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError("Password or email was incorrect"));
   }
 
+  req.user = user;
   sendToken(user, 200, res);
 });
 
@@ -79,6 +80,15 @@ module.exports.protect = catchAsync(async (req, res, next) => {
   const decoded = await promisify(jwt.verify)(token, process.env.TOKEN_SECRET);
 
   req.user = decoded.data;
+  next();
+});
+
+module.exports.notLoggedIn = catchAsync(async (req, res, next) => {
+  const { authorization } = req.headers;
+
+  if (authorization) {
+    return next(new AppError("you cant perform that action", 500));
+  }
   next();
 });
 

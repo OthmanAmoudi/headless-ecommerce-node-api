@@ -7,10 +7,16 @@ router.get(
   authController.protect,
   userController.getUserByEmail
 );
-router.post("/login", authController.login);
+
+router.post("/login", authController.notLoggedIn, authController.login);
 router.post("/logout", authController.protect, authController.logout);
-router.post("/signup", authController.signup);
+router.post("/signup", authController.notLoggedIn, authController.signup);
 router.get("/currentUser", authController.protect, userController.currentUser);
+router.post(
+  "/changepassword",
+  authController.protect,
+  userController.changeUserPassword
+);
 //example of admin route:
 router.get(
   "/admin",
