@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
-
+const crypto = require("crypto");
 const userSchema = mongoose.Schema({
   name: {
     type: String,
@@ -34,16 +34,31 @@ const userSchema = mongoose.Schema({
       message: "Passwords do not match",
     },
   },
+  passwordChangedAt: Date,
+  passwordResetToken: String,
+  passwordResetExpires: Date,
   role: {
     type: String,
     default: "user",
   },
 });
 
-userSchema.pre("save", async function () {
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) {
+    return next();
+  }
   const salt = await bcrypt.genSalt();
   this.password = await bcrypt.hash(this.password, salt);
   this.passwordConfirm = undefined;
+  next();
+});
+
+userSchema.pre("save", function (next) {
+  if (!this.isModified("password") || this.isNew) {
+    return next();
+  }
+  this.passwordChangedAt = Date.now() - 10000;
+  next();
 });
 
 userSchema.methods.checkPassword = async function (
@@ -51,6 +66,31 @@ userSchema.methods.checkPassword = async function (
   userHashedPassword
 ) {
   return await bcrypt.compare(password, userHashedPassword);
+};
+
+userSchema.methods.changedPasswordAt = function (tokenIssuedAt) {
+  if (this.passwordChangedAt) {
+    const convertedPassTimestamp = parseInt(
+      new Date(this.passwordChangedAt).getTime() / 1000,
+      10
+    );
+    return tokenIssuedAt < convertedPassTimestamp;
+  }
+  return false;
+};
+
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  const digestedResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  console.log({ resetToken, digestedResetToken });
+  this.passwordResetToken = digestedResetToken;
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+  return resetToken;
 };
 
 const User = mongoose.model("user", userSchema);

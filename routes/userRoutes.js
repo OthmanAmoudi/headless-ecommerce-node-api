@@ -13,9 +13,19 @@ router.post("/logout", authController.protect, authController.logout);
 router.post("/signup", authController.notLoggedIn, authController.signup);
 router.get("/currentUser", authController.protect, userController.currentUser);
 router.post(
+  "/forgotpassword",
+  authController.notLoggedIn,
+  authController.forgotPassword
+);
+router.post(
+  "/resetpassword/:token",
+  authController.notLoggedIn,
+  authController.resetPassword
+);
+router.post(
   "/changepassword",
   authController.protect,
-  userController.changeUserPassword
+  authController.changeUserPassword
 );
 //example of admin route:
 router.get(
