@@ -186,5 +186,6 @@ module.exports.resetPassword = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     message: "Password Changed Successfully",
+    //token
   });
 });
