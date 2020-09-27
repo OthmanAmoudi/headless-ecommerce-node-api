@@ -11,12 +11,22 @@ const handleValidationFieldsDB = (error) => {
   const validationErrors = [];
   const errorKeys = Object.keys(error.errors);
   errorKeys.forEach((errorKey) => {
-    validationErrors.push({
-      [errorKey]: error.errors[errorKey].properties.message,
-    });
+    if (error.errors[errorKey].kind == "ObjectId") {
+      validationErrors.push({
+        [error.errors[errorKey].path]: "wrong id supplied or do not exist",
+      });
+    } else {
+      validationErrors.push({
+        [errorKey]: error.errors[errorKey].properties.message,
+      });
+    }
   });
 
   return [new AppError("validation fields error", 400), validationErrors];
+};
+
+const handleObjectIdDB = (error) => {
+  return new AppError("Wrong id or does not exist", 404);
 };
 
 const handleJWTError = (error) =>
@@ -75,8 +85,12 @@ module.exports = (err, req, res, next) => {
     //get ride of all new Error() props but only keep message
     let msg = err.message;
     let error = { ...err, message: msg };
+    // console.log("OK CATCH DB Error here");
+    // console.log(error);
+    // console.log("OK DoooooooonE");
     // console.table(error);
     if (error.code === 11000) error = handleDuplicateFieldsDB(error);
+    if (error.kind === "ObjectId") error = handleObjectIdDB(error);
     if (Object.keys(error.errors || []).length > 0) {
       error = handleValidationFieldsDB(error);
       sendShortErrorLogWithValidations(error[0], error[1], res);

@@ -1,15 +1,24 @@
 const mongoose = require("mongoose");
+const shortid = require("shortid");
+const slugify = require("slugify");
 
 const brandSchema = mongoose.Schema({
   name: {
     type: String,
+    unique: true,
+    trim: true,
     required: [True, "Brand Name is required"],
   },
+  slug: String,
   description: String,
-  imagePreview: String,
-  imageURL: String,
+  logoImage: String,
+  imageThumbnail: String,
   categories: [String],
-  // products:[]
+});
+
+brandSchema.pre("save", async function (next) {
+  this.slug = slugify(this.name, { lower: true });
+  next();
 });
 
 const Brand = mongoose.model("Brand", brandSchema);

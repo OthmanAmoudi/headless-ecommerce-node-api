@@ -7,6 +7,7 @@ const productSchema = mongoose.Schema({
   name: {
     type: String,
     required: [true, "Product Name Can not Be Empty"],
+    trim: true,
   },
   slug: {
     type: String,
@@ -16,8 +17,14 @@ const productSchema = mongoose.Schema({
     type: Number,
     required: [true, "Product Price Can not Be Empty"],
   },
-  description: String,
-  summary: String,
+  description: {
+    type: String,
+    trim: true,
+  },
+  summary: {
+    type: String,
+    trim: true,
+  },
   category: {
     type: String,
     default: "uncategorized",
@@ -28,16 +35,19 @@ const productSchema = mongoose.Schema({
   },
   onSalePrice: Number,
   quantity: Number,
+  ratingsAverage: {
+    type: Number,
+    default: 4.5,
+  },
+  ratingsQuantity: {
+    type: Number,
+    default: 0,
+  },
   image: String,
   previewImage: String,
-  assets: [
-    {
-      url: String,
-      height: String,
-      width: String,
-    },
-  ],
+  assets: [String],
   shipping: {
+    name: String,
     dimensions: {
       height: String,
       length: String,
@@ -50,6 +60,10 @@ const productSchema = mongoose.Schema({
   // attributes
   //variantes
   //category
+  cratedAt: {
+    type: Date,
+    default: Date.now(),
+  },
 });
 
 productSchema.pre("save", async function (next) {
