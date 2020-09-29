@@ -147,7 +147,7 @@ module.exports.forgotPassword = catchAsync(async (req, res, next) => {
     return next(new AppError("reset token already sent"));
   }
   const resetToken = user.createPasswordResetToken();
-  //send email HERE
+  //TODO send email HERE
   await user.save({ validateBeforeSave: false });
   res.status(200).json({
     status: "success",

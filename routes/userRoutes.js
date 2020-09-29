@@ -12,6 +12,7 @@ router.post("/login", authController.notLoggedIn, authController.login);
 router.post("/logout", authController.protect, authController.logout);
 router.post("/signup", authController.notLoggedIn, authController.signup);
 router.get("/currentUser", authController.protect, userController.currentUser);
+
 router.post(
   "/forgotpassword",
   authController.notLoggedIn,
@@ -29,6 +30,11 @@ router.post(
 );
 //address crud
 router
+  .route("/address")
+  .get(authController.protect, userController.getAddress)
+  .post(authController.protect, userController.createAddress)
+  .put(authController.protect, userController.updateAddress)
+  .delete(authController.protect, userController.deleteAddress);
 
 //example of admin route:
 router.get(

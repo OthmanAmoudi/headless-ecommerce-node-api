@@ -2,6 +2,27 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const validator = require("validator");
+const AppError = require("../utils/appError");
+
+const addressSchema = mongoose.Schema({
+  address: {
+    type: String,
+    required: true,
+  },
+  address2: String,
+  description: String,
+  name: String,
+  mobile_number: {
+    type: String,
+    required: true,
+  },
+  province: String,
+  city: String,
+  country: String,
+  pobox: String,
+  coordinates: [Number],
+});
+
 const userSchema = mongoose.Schema({
   name: {
     type: String,
@@ -47,7 +68,16 @@ const userSchema = mongoose.Schema({
   role: {
     type: String,
     default: "user",
+    enum: ["user", "moderator", "admin"],
   },
+  addresses: [addressSchema],
+});
+
+userSchema.pre("save", async function (next) {
+  if (this.addresses.length > 3) {
+    return next(new AppError("Address size exceeded 3"));
+  }
+  next();
 });
 
 userSchema.pre("save", async function (next) {
