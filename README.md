@@ -4,7 +4,7 @@
 **backend specifics are**
 - custom error handler
 - modular routing system (public & protected routes)
-(to be implemented:)
+- (to be implemented:)
 - factory pattern for simple CRUD operations
 - ODM Specific operations for Query,sorting,limiting,paginating
 - models internationalization 
