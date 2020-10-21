@@ -1,15 +1,17 @@
 # Headless Ecommerce Application
 
 ### currently being developed with node,express, and MongoDB (Mongoose).
-**backend specifics are**
+**backend specifics:**
 - custom error handler
 - modular routing system (public & protected routes)
+
 **to be implemented(soon):**
 - factory pattern for simple CRUD operations
 - ODM Specific operations for Query,sorting,limiting,paginating
-- models internationalization 
+- models internationalization
+- Cacheing with Redis
 
-**features are**
+**E-commerce features:**
 - Authentication System
   1. Login (JWT)
   2. Logout
@@ -17,6 +19,8 @@
   4. Forgot/Reset Password (nodemailer)
   5. Update User password
 - User Addresses (upto 4 addresses per user)
+- Brands
 - Products & Product Variations
 
 *more coming soon*
+(Image album, Categories, Reviews, Payment, Shipping, Order, Cart, Wishlist,Tax)
