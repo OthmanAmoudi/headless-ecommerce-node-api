@@ -1,7 +1,7 @@
 # Headless Ecommerce Application
 
-### currently being developed with node,express, and MongoDB (Mongoose).
-**backend specifics:**
+### currently being developed with Node,Express and MongoDB (Mongoose).
+**API specifications:**
 - custom error handler
 - modular routing system (public & protected routes)
 
